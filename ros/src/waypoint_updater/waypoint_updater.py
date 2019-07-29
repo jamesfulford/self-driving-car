@@ -9,22 +9,29 @@ from scipy.spatial import KDTree
 import math
 
 '''
-This node will publish waypoints from the car's current position to some `x` distance ahead.
+This node will publish waypoints from the car's current position to some `x`
+distance ahead.
 
-As mentioned in the doc, you should ideally first implement a version which does not care
-about traffic lights or obstacles.
+As mentioned in the doc, you should ideally first implement a version which
+does not care about traffic lights or obstacles.
 
-Once you have created dbw_node, you will update this node to use the status of traffic lights too.
+Once you have created dbw_node, you will update this node to use the status of
+traffic lights too.
 
-Please note that our simulator also provides the exact location of traffic lights and their
-current status in `/vehicle/traffic_lights` message. You can use this message to build this node
-as well as to verify your TL classifier.
+Please note that our simulator also provides the exact location of traffic
+lights and their current status in `/vehicle/traffic_lights` message. You
+can use this message to build this node as well as to verify your TL
+classifier.
 
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 # TODO(jafulfor): Extract to a ROS constant
-LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 200  # Waypoints to publish. You can change this
+
+
+def dl(a, b):
+    return math.sqrt((a.x-b.x)**2 + (a.y-b.y) ** 2 + (a.z-b.z) ** 2)
 
 
 class WaypointUpdater(object):
@@ -37,7 +44,11 @@ class WaypointUpdater(object):
         # rospy.Subscriber('/traffic_waypoint', Waypoint, self.traffic_cb)
         # rospy.Subscriber('/obstacle_waypoint', Waypoint, self.obstacle_cb)
 
-        self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
+        self.final_waypoints_pub = rospy.Publisher(
+            'final_waypoints',
+            Lane,
+            queue_size=1
+        )
 
         self.pose = None
         self.base_waypoints = None
@@ -56,10 +67,10 @@ class WaypointUpdater(object):
     def is_initialized(self):
         return self.pose and self.base_waypoints
 
-    def publish_waypoints(self, starting_index):
+    def publish_waypoints(self, idx):
         lane = Lane()
         lane.header = self.base_waypoints.header
-        lane.waypoints = self.base_waypoints.waypoints[starting_index : starting_index + LOOKAHEAD_WPS]
+        lane.waypoints = self.base_waypoints.waypoints[idx:idx + LOOKAHEAD_WPS]
         self.final_waypoints_pub.publish(lane)
 
     def pose_cb(self, msg):
@@ -69,8 +80,10 @@ class WaypointUpdater(object):
         self.base_waypoints = waypoints
         if not self.waypoints_2d:
             self.waypoints_2d = [
-                [ waypoint.pose.pose.position.x, waypoint.pose.pose.position.y ]
-                for waypoint in self.base_waypoints.waypoints
+                [
+                    waypoint.pose.pose.position.x,
+                    waypoint.pose.pose.position.y
+                ] for waypoint in self.base_waypoints.waypoints
             ]
             self.waypoint_tree = KDTree(self.waypoints_2d)
 
@@ -79,7 +92,7 @@ class WaypointUpdater(object):
         pass
 
     def obstacle_cb(self, msg):
-        # TODO: Callback for /obstacle_waypoint message. We will implement it later
+        # TODO: Callback for /obstacle_waypoint message. Will implement later
         pass
 
     def get_waypoint_velocity(self, waypoint):
@@ -88,11 +101,15 @@ class WaypointUpdater(object):
     def set_waypoint_velocity(self, waypoints, waypoint, velocity):
         waypoints[waypoint].twist.twist.linear.x = velocity
 
-    def distance(self, waypoints, wp1, wp2):
+    def distance(self, waypoints, waypoint_1, waypoint_2):
         dist = 0
-        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
-        for i in range(wp1, wp2+1):
-            dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
+        wp1 = waypoint_1
+        wp2 = waypoint_2
+        for i in range(wp1, wp2 + 1):
+            dist += dl(
+                waypoints[wp1].pose.pose.position,
+                waypoints[i].pose.pose.position
+            )
             wp1 = i
         return dist
 
@@ -104,9 +121,14 @@ class WaypointUpdater(object):
         i = self.waypoint_tree.query(position, 1)[1]
 
         # Find out closest versus next
-        closest, prev = np.array(self.waypoints_2d[i]), np.array(self.waypoints_2d[i - 1])
+        closest, prev = np.array(
+            self.waypoints_2d[i]
+        ), np.array(
+            self.waypoints_2d[i - 1]
+        )
         val = np.dot(closest - prev, np.array(position) - closest)
-        # if (position - closest) is ahead of (closest - prev) vector, then closest waypoint is behind us and next waypoint is next
+        # if (position - closest) is ahead of (closest - prev) vector
+        # then closest waypoint is behind us and next waypoint is next
         return i if val <= 0 else (i + 1) % len(self.waypoints_2d)
 
 
