@@ -231,9 +231,6 @@ bool PurePursuit::interpolateNextTarget(int next_waypoint, geometry_msgs::Point 
 
 bool PurePursuit::verifyFollowing() const
 {
-  // NOTE(james.fulford): This is a hack to get more stable behavior
-  return true;
-
   double a = 0;
   double b = 0;
   double c = 0;
