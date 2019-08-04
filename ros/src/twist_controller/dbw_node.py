@@ -125,7 +125,7 @@ class DBWNode(object):
                     # Intended linear velocity
                     self.twist_cmd.twist.linear.x,
                     # Intended angular velocity
-                    self.twist_cmd.twist.linear.z,
+                    self.twist_cmd.twist.angular.z,
                     # Current velocity
                     self.current_velocity.twist.linear.x,
                     # DBW is enabled (if disabled, some controllers reset)
