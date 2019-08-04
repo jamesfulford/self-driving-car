@@ -127,7 +127,7 @@ class DBWNode(object):
                     # Intended angular velocity
                     self.twist_cmd.twist.linear.z,
                     # Current velocity
-                    self.current_velocity_twist.twist.linear.x,
+                    self.current_velocity.twist.linear.x,
                     # DBW is enabled (if disabled, some controllers reset)
                     self.dbw_enabled,
                 ) if self.is_initialized()
@@ -146,8 +146,8 @@ class DBWNode(object):
     def dbw_enabled_handler(self, dbw_enabled):
         self.dbw_enabled = dbw_enabled
 
-    def current_velocity_handler(self, current_velocity_twist):
-        self.current_velocity_twist = current_velocity_twist
+    def current_velocity_handler(self, current_velocity):
+        self.current_velocity = current_velocity
 
     def publish(self, throttle, brake, steer):
         rospy.loginfo("dbw_node: publishing throttle {} brake {} steer {}".format(throttle, brake, steer))
