@@ -41,18 +41,14 @@ class Controller(object):
         ))
 
         # Control Throttle
-        kp = 0.3
-        ki = 0.1
-        kd = 0.0
-
-        mn = 0.0  # min throttle value
-        mx = 0.2  # max throttle value
-
-        self.throttle_controller = PID(kp, ki, kd, mn, mx)
+        kp = 0.15
+        ki = 0.0
+        kd = 0.09
+        self.throttle_controller = PID(kp, ki, kd, mn=0.0, mx=0.2)
 
         # Control Velocity
-        tau = 0.5
-        ts = 0.02
+        tau = 12
+        ts = 1
         self.velocity_filter = LowPassFilter(tau, ts)
 
         self.last_time = rospy.get_time()
@@ -92,12 +88,11 @@ class Controller(object):
             angular_velocity,
             current_velocity,
         )
-        rospy.loginfo("fulford Steer: input: {} {} {}".format(
+        rospy.loginfo("Controller: Yaw: input: {} {} {}".format(
             linear_velocity,
             angular_velocity,
             current_velocity,
         ))
-        rospy.loginfo("fulford Steer: output: {}".format(steer))
 
         v_error = linear_velocity - current_velocity
 
