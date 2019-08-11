@@ -50,6 +50,7 @@ class DBWNode(object):
         steer_ratio = rospy.get_param('~steer_ratio', 14.8)
         max_lat_accel = rospy.get_param('~max_lat_accel', 3.)
         max_steer_angle = rospy.get_param('~max_steer_angle', 8.)
+        min_speed = 0.1
 
         self.twist_cmd_sub = rospy.Subscriber(
             "/twist_cmd",
@@ -82,6 +83,7 @@ class DBWNode(object):
             steer_ratio=steer_ratio,
             max_lat_accel=max_lat_accel,
             max_steer_angle=max_steer_angle,
+            min_speed=min_speed,
         )
 
         # Outputs
