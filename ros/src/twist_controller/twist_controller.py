@@ -108,7 +108,7 @@ class Controller(object):
         #
         if linear_velocity == 0.0 and current_velocity < 0.1:
             throttle = 0
-            brake = 400  # Newton meters required for no movement
+            brake = 700  # Newton meters required for no movement
         elif throttle < 0.1 and v_error < 0:
             throttle = 0
             decel = max(v_error, self.decel_limit)
