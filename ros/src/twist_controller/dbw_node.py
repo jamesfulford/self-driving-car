@@ -69,6 +69,7 @@ class DBWNode(object):
         )
 
         # State
+        self.initialized = False
         self.dbw_enabled = False
         self.current_velocity = None
         self.twist_cmd = None
@@ -108,9 +109,11 @@ class DBWNode(object):
     def loop(self):
         rate = rospy.Rate(50)  # 50Hz
         while not rospy.is_shutdown():
-            throttle, brake, steering = (0.0, 0.0, 0.0)
-            if self.current_velocity and self.twist_cmd:
-                self.dbw_enabled = True # TODO(james.fulford): Remove hack
+            throttle, brake, steering = (0.0, 700.0, 0.0)
+
+            initialized = bool(self.initialized and self.current_velocity and self.twist_cmd)
+            # rospy.loginfo("jafulfor: init {} vel {} twist {} check {}".format(self.initialized, bool(self.current_velocity), bool(self.twist_cmd), bool(self.initialized and self.current_velocity and self.twist_cmd)))
+            if initialized:
                 # If DBW is disabled, still register measurements
                 # just in case it is re-enabled
                 throttle, brake, steering = self.controller.control(
@@ -125,6 +128,8 @@ class DBWNode(object):
                 )
 
             if self.dbw_enabled:
+                if initialized:
+                    rospy.loginfo("Controller: publishing {} {} {}".format(throttle, brake, steering))
                 # will not publish if dbw_enabled is not initialized
                 # or if drive by wire is disabled
                 self.publish(throttle, brake, steering)
@@ -136,6 +141,7 @@ class DBWNode(object):
 
     def dbw_enabled_handler(self, dbw_enabled):
         self.dbw_enabled = dbw_enabled.data
+        self.initialized = True
 
     def current_velocity_handler(self, current_velocity):
         self.current_velocity = current_velocity
