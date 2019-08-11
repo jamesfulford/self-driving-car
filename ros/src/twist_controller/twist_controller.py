@@ -31,8 +31,8 @@ class Controller(object):
             max_lat_accel,
             max_steer_angle
         )
-        # "Controller: yaw init 3 14.8 0.1 3.0 8.0"
-        rospy.loginfo("Controller: yaw init {} {} {} {} {}".format(
+        # Yaw: init 3 14.8 0.1 3.0 8.0
+        rospy.loginfo("Yaw: init {} {} {} {} {}".format(
             wheel_base,
             steer_ratio,
             min_speed,
@@ -51,7 +51,7 @@ class Controller(object):
         ts = 1
         self.velocity_filter = LowPassFilter(tau, ts)
 
-        self.last_time = rospy.get_time()
+        self.last_time = None
 
         # Save just in case
         self.vehicle_mass = vehicle_mass
@@ -67,9 +67,9 @@ class Controller(object):
 
     def control(
         self,
-        curr_velocity,
-        linear_velocity,
-        angular_velocity,
+        current_velocity,
+        target_linear_velocity,
+        target_angular_velocity,
         dbw_enabled,
     ):
         #
@@ -82,37 +82,39 @@ class Controller(object):
         #
         # Main controller code
         #
-        current_velocity = self.velocity_filter.filt(curr_velocity)
-        steer = self.yaw_controller.get_steering(
-            linear_velocity,
-            angular_velocity,
-            current_velocity,
-        )
-        rospy.loginfo("Controller: Yaw: input: {} {} {}".format(
-            linear_velocity,
-            angular_velocity,
+        rospy.loginfo("Yaw: input: {} {} {}".format(
+            target_linear_velocity,
+            target_angular_velocity,
             current_velocity,
         ))
+        steer = self.yaw_controller.get_steering(
+            target_linear_velocity,
+            target_angular_velocity,
+            current_velocity,
+        )
+        rospy.loginfo("Yaw: output: {}".format(
+            steer,
+        ))
 
-        v_error = linear_velocity - current_velocity
+        throttle = 0.
+        brake = 0.
 
-        current_time = rospy.get_time()
-        sample_time = current_time - self.last_time
+        current_time = rospy.Time.now()
+
+        if self.last_time != None:
+            dt = (current_time - self.last_time).nsecs / 1e9
+            cte = target_linear_velocity - current_velocity
+            acceleration = self.throttle_controller.step(cte, dt)
+
+            self.velocity_filter.filt(acceleration)
+            if self.velocity_filter.ready:
+                acceleration = self.velocity_filter.get()
+
+            if acceleration > 0:
+                throttle = acceleration
+            else:
+                brake = self.vehicle_mass * abs(acceleration) * self.wheel_radius
+
         self.last_time = current_time
-
-        throttle = self.throttle_controller.step(v_error, sample_time)
-        brake = 0
-
-        #
-        # Carla-specific
-        #
-        if linear_velocity == 0.0 and current_velocity < 0.1:
-            throttle = 0
-            brake = 700  # Newton meters required for no movement
-        elif throttle < 0.1 and v_error < 0:
-            throttle = 0
-            decel = max(v_error, self.decel_limit)
-            # Torque
-            brake = abs(decel) * self.vehicle_mass * self.wheel_radius
 
         return throttle, brake, steer

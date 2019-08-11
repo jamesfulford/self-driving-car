@@ -112,16 +112,15 @@ class DBWNode(object):
             throttle, brake, steering = (0.0, 700.0, 0.0)
 
             initialized = bool(self.initialized and self.current_velocity and self.twist_cmd)
-            # rospy.loginfo("jafulfor: init {} vel {} twist {} check {}".format(self.initialized, bool(self.current_velocity), bool(self.twist_cmd), bool(self.initialized and self.current_velocity and self.twist_cmd)))
             if initialized:
                 # If DBW is disabled, still register measurements
                 # just in case it is re-enabled
                 throttle, brake, steering = self.controller.control(
                     # Current velocity
                     self.current_velocity.twist.linear.x,
-                    # Intended linear velocity
+                    # Target linear velocity
                     self.twist_cmd.twist.linear.x,
-                    # Intended angular velocity
+                    # Target angular velocity
                     self.twist_cmd.twist.angular.z,
                     # DBW is enabled (if disabled, some controllers reset)
                     self.dbw_enabled,
@@ -129,6 +128,16 @@ class DBWNode(object):
 
             if self.dbw_enabled:
                 if initialized:
+                    rospy.loginfo( "Controller: input {} {} {} {}".format(
+                        # Current velocity
+                        self.current_velocity.twist.linear.x,
+                        # Target linear velocity
+                        self.twist_cmd.twist.linear.x,
+                        # Target angular velocity
+                        self.twist_cmd.twist.angular.z,
+                        # DBW is enabled (if disabled, some controllers reset)
+                        self.dbw_enabled,
+                    ))
                     rospy.loginfo("Controller: publishing {} {} {}".format(throttle, brake, steering))
                 # will not publish if dbw_enabled is not initialized
                 # or if drive by wire is disabled
