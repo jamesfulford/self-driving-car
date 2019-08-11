@@ -62,7 +62,7 @@ class Controller(object):
 
     def control(
         self,
-        velocity,
+        curr_velocity,
         linear_velocity,
         angular_velocity,
         dbw_enabled,
@@ -77,12 +77,18 @@ class Controller(object):
         #
         # Main controller code
         #
-        current_velocity = self.vel_lpf.filt(velocity)
+        current_velocity = self.velocity_filter.filt(curr_velocity)
         steer = self.yaw_controller.get_steering(
             linear_velocity,
             angular_velocity,
             current_velocity,
         )
+        rospy.loginfo("fulford Steer: input: {} {} {}".format(
+            linear_velocity,
+            angular_velocity,
+            current_velocity,
+        ))
+        rospy.loginfo("fulford Steer: output: {}".format(steer))
 
         v_error = linear_velocity - current_velocity
 

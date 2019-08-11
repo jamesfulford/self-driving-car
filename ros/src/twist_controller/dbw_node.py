@@ -68,7 +68,7 @@ class DBWNode(object):
         )
 
         # State
-        self.dbw_enabled = None
+        self.dbw_enabled = False
         self.current_velocity = None
         self.twist_cmd = None
         self.controller = Controller(
@@ -103,36 +103,25 @@ class DBWNode(object):
 
         self.loop()
 
-    def is_initialized(self):
-        """
-        Returns whether the subscribed-to topics have emitted
-        """
-        return (
-            # False is ok, because we still want to register measurements
-            self.dbw_enabled is not None and
-            # 0 is acceptable
-            self.current_velocity is not None and
-            self.twist_cmd
-        )
-
     def loop(self):
         rate = rospy.Rate(50)  # 50Hz
         while not rospy.is_shutdown():
-            throttle, brake, steering = (
+            throttle, brake, steering = (0.0, 0.0, 0.0)
+            if self.current_velocity and self.twist_cmd:
+                self.dbw_enabled = True # TODO(james.fulford): Remove hack
                 # If DBW is disabled, still register measurements
                 # just in case it is re-enabled
-                self.controller.control(
+                throttle, brake, steering = self.controller.control(
+                    # Current velocity
+                    self.current_velocity.twist.linear.x,
                     # Intended linear velocity
                     self.twist_cmd.twist.linear.x,
                     # Intended angular velocity
                     self.twist_cmd.twist.angular.z,
-                    # Current velocity
-                    self.current_velocity.twist.linear.x,
                     # DBW is enabled (if disabled, some controllers reset)
                     self.dbw_enabled,
-                ) if self.is_initialized()
-                else (0.0, 0.0, 0.0)
-            )
+                )
+
             if self.dbw_enabled:
                 # will not publish if dbw_enabled is not initialized
                 # or if drive by wire is disabled
@@ -144,7 +133,7 @@ class DBWNode(object):
         self.twist_cmd = twist_cmd
 
     def dbw_enabled_handler(self, dbw_enabled):
-        self.dbw_enabled = dbw_enabled
+        self.dbw_enabled = dbw_enabled.data
 
     def current_velocity_handler(self, current_velocity):
         self.current_velocity = current_velocity
@@ -167,8 +156,9 @@ class DBWNode(object):
         bcmd.enable = True
         bcmd.pedal_cmd_type = BrakeCmd.CMD_TORQUE
         bcmd.pedal_cmd = brake
-        self.brake_cmd_p.publish(bcmd)
+        self.brake_cmd_pub.publish(bcmd)
 
 
 if __name__ == '__main__':
+    print("Starting dbw node")
     DBWNode()
