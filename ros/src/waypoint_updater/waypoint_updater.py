@@ -50,6 +50,9 @@ class WaypointUpdater(object):
             queue_size=1
         )
 
+        self.pose_initialized = False
+        self.waypoints_initialized = False
+
         self.pose = None
         self.base_waypoints = None
         self.waypoints_2d = None
@@ -65,7 +68,7 @@ class WaypointUpdater(object):
             rate.sleep()
 
     def is_initialized(self):
-        return self.pose and self.base_waypoints
+        return self.pose_initialized and self.waypoints_initialized
 
     def publish_waypoints(self, idx):
         lane = Lane()
@@ -75,6 +78,7 @@ class WaypointUpdater(object):
 
     def pose_cb(self, msg):
         self.pose = msg
+        self.pose_initialized = True
 
     def waypoints_cb(self, waypoints):
         self.base_waypoints = waypoints
@@ -85,6 +89,7 @@ class WaypointUpdater(object):
             ] for waypoint in self.base_waypoints.waypoints
         ]
         self.waypoint_tree = KDTree(self.waypoints_2d)
+        self.waypoints_initialized = True
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
