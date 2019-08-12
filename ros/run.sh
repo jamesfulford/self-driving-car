@@ -1,1 +1,1 @@
-catkin_make && . devel/setup.sh && roslaunch launch/styx.launch
+catkin_make && . devel/setup.sh && find -name '*.pyc' -delete && roslaunch launch/styx.launch
