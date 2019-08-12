@@ -27,7 +27,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 # TODO(jafulfor): Extract to a ROS constant
-LOOKAHEAD_WPS = 200  # Waypoints to publish. You can change this
+LOOKAHEAD_WPS = 50  # Waypoints to publish. You can change this
 
 
 def dl(a, b):
@@ -38,7 +38,7 @@ class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
 
-        rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
+        rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # rospy.Subscriber('/traffic_waypoint', Waypoint, self.traffic_cb)
@@ -61,7 +61,7 @@ class WaypointUpdater(object):
         self.loop()
 
     def loop(self):
-        rate = rospy.Rate(50)
+        rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             if self.is_initialized():
                 self.publish_waypoints(self.get_next_waypoint_index())
@@ -74,6 +74,7 @@ class WaypointUpdater(object):
         lane = Lane()
         lane.header = self.base_waypoints.header
         lane.waypoints = self.base_waypoints.waypoints[idx:idx + LOOKAHEAD_WPS]
+        rospy.loginfo("next_waypoint: ({0.x}, {0.y}) [{1}]".format(lane.waypoints[0].pose.pose.position, idx))
         self.final_waypoints_pub.publish(lane)
 
     def pose_cb(self, msg):
