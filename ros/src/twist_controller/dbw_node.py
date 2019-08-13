@@ -127,18 +127,6 @@ class DBWNode(object):
                 )
 
             if self.dbw_enabled:
-                if initialized:
-                    rospy.loginfo( "Controller: input {} {} {} {}".format(
-                        # Current velocity
-                        self.current_velocity.twist.linear.x,
-                        # Target linear velocity
-                        self.twist_cmd.twist.linear.x,
-                        # Target angular velocity
-                        self.twist_cmd.twist.angular.z,
-                        # DBW is enabled (if disabled, some controllers reset)
-                        self.dbw_enabled,
-                    ))
-                    rospy.loginfo("Controller: publishing {} {} {}".format(throttle, brake, steering))
                 # will not publish if dbw_enabled is not initialized
                 # or if drive by wire is disabled
                 self.publish(throttle, brake, steering)
@@ -156,8 +144,6 @@ class DBWNode(object):
         self.current_velocity = current_velocity
 
     def publish(self, throttle, brake, steer):
-        rospy.loginfo("dbw_node: publishing throttle {} brake {} steer {}".format(throttle, brake, steer))
-
         tcmd = ThrottleCmd()
         tcmd.enable = True
         tcmd.pedal_cmd_type = ThrottleCmd.CMD_PERCENT

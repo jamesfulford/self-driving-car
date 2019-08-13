@@ -31,14 +31,6 @@ class Controller(object):
             max_lat_accel,
             max_steer_angle
         )
-        # Yaw: init 3 14.8 0.1 3.0 8.0
-        rospy.loginfo("Yaw: init {} {} {} {} {}".format(
-            wheel_base,
-            steer_ratio,
-            min_speed,
-            max_lat_accel,
-            max_steer_angle
-        ))
 
         # Control Throttle
         kp = 0.15
@@ -82,19 +74,11 @@ class Controller(object):
         #
         # Main controller code
         #
-        rospy.loginfo("Yaw: input: {} {} {}".format(
-            target_linear_velocity,
-            target_angular_velocity,
-            current_velocity,
-        ))
         steer = self.yaw_controller.get_steering(
             target_linear_velocity,
             target_angular_velocity,
             current_velocity,
         )
-        rospy.loginfo("Yaw: output: {}".format(
-            steer,
-        ))
 
         throttle = 0.
         brake = 0.
