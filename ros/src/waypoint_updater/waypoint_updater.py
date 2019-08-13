@@ -74,7 +74,6 @@ class WaypointUpdater(object):
         lane = Lane()
         lane.header = self.base_waypoints.header
         lane.waypoints = self.base_waypoints.waypoints[idx:idx + LOOKAHEAD_WPS]
-        rospy.loginfo("next_waypoint: ({0.x}, {0.y}) [{1}]".format(lane.waypoints[0].pose.pose.position, idx))
         self.final_waypoints_pub.publish(lane)
 
     def pose_cb(self, msg):
