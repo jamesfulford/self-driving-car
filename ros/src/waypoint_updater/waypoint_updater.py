@@ -34,6 +34,10 @@ def dl(a, b):
     return math.sqrt((a.x-b.x)**2 + (a.y-b.y) ** 2 + (a.z-b.z) ** 2)
 
 
+def set_speed(waypoint, speed):
+    waypoint.twist.twist.linear.x = speed
+
+
 class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
