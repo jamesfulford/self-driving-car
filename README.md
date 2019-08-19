@@ -21,6 +21,32 @@ bash run.sh
 
 Run the Simulator.
 
+### Training Environment
+Setup environment files
+```bash
+git clone https://github.com/udacity/CarND-Term1-Starter-Kit starter-kit && cd starter-kit
+mv Dockerfile.cpu Dockerfile
+```
+
+Build a docker image.
+```bash
+docker build . -t model
+```
+
+Return to capstone repository
+```bash
+cd ../capstone
+```
+
+Instantiate a docker container from the image.
+```bash
+docker run -v $PWD:/capstone --rm -it model
+```
+
+```bash
+cd /capstone/data && python model.py
+```
+
 ### Real world testing
 1. Download [training bag](https://s3-us-west-1.amazonaws.com/udacity-selfdrivingcar/traffic_light_bag_file.zip) that was recorded on the Udacity self-driving car.
 
