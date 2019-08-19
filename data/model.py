@@ -3,8 +3,10 @@ from math import ceil
 
 import numpy as np
 from scipy import ndimage
+from PIL import Image
 import sklearn
 from sklearn.model_selection import train_test_split
+import cv2
 
 from keras.models import Sequential
 from keras.layers import (
@@ -21,20 +23,23 @@ from keras.layers import (
 #
 
 # Assumes running in container
-data_dir = "/capstone/data/image_data"
+images_glob = "/data/image_data/*/*.png"
+slash_index_of_classification = -2
 
-input_shape = (800, 600, 3)
+input_shape = (600, 800, 3)
 
-batch_size = 128
+batch_size = 8
 
 validation_set_size = .2
 
-epochs = 10
+epochs = 5
 
 #
 # Get data from filesystem
 #
-samples = glob.glob(data_dir + "/*/*.png")
+samples = glob.glob(images_glob)
+
+print("Samples: {}".format(len(samples)))
 
 train_samples, validation_samples = train_test_split(
     samples,
@@ -47,12 +52,16 @@ train_samples, validation_samples = train_test_split(
 #
 def get_data_from_sample(sample):
     image = ndimage.imread(sample)
+    p = Image.fromarray(image)
 
-    value = sample.split('/')[1]
+    value = int(sample.split('/')[slash_index_of_classification])
 
     images = [
         image,
-        # TODO(james.fulford): Add variants of image for generalizability
+        np.fliplr(image),  # flipping left-to-right
+        np.array(p.rotate(15, expand=False)),  # rotating
+        np.array(p.rotate(365 - 15, expand=False)),  # rotating the other way
+        cv2.cvtColor(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY), cv2.COLOR_GRAY2RGB),  # rgb -> grayscale -> "rgb"
     ]
     return (
         images,
@@ -66,7 +75,7 @@ def data_generator(samples, batch_size=128):
     while True:
         samples = sklearn.utils.shuffle(samples)
         for i in range(0, n, batch_size):
-            batch_samples = samples[i:i + batch_images]
+            batch_samples = samples[i:i + batch_size]
 
             batch_images, batch_values = [], []
 
@@ -84,7 +93,7 @@ def data_generator(samples, batch_size=128):
 # Define model
 #
 model = Sequential()
-model.add(Lambda(lambda i: (i - 128) / 256.))  # Mean centering + normalization
+model.add(Lambda(lambda i: (i - 128) / 256., input_shape=input_shape))  # Mean centering + normalization
 
 model.add(Convolution2D(24, (5, 5), strides=(2, 2), activation="relu"))
 model.add(Dropout(0.1))
