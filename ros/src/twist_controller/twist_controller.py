@@ -59,7 +59,7 @@ class Controller(object):
 
     def control(
         self,
-        current_velocity,
+        current_velocity_unfiltered,
         target_linear_velocity,
         target_angular_velocity,
         dbw_enabled,
@@ -74,30 +74,49 @@ class Controller(object):
         #
         # Main controller code
         #
+
+        #
+        # Filter velocity
+        current_velocity = self.velocity_filter.filt(current_velocity_unfiltered)
+
+        #
+        # Determine steering
         steer = self.yaw_controller.get_steering(
             target_linear_velocity,
             target_angular_velocity,
             current_velocity,
         )
 
+        #
+        # Figure out throttle/braking
         throttle = 0.
         brake = 0.
 
         current_time = rospy.Time.now()
 
         if self.last_time != None:
+            # Find throttle
             dt = (current_time - self.last_time).nsecs / 1e9
-            cte = target_linear_velocity - current_velocity
-            acceleration = self.throttle_controller.step(cte, dt)
+            velocity_error = target_linear_velocity - current_velocity
+            throttle = self.throttle_controller.step(velocity_error, dt)
 
-            self.velocity_filter.filt(acceleration)
-            if self.velocity_filter.ready:
-                acceleration = self.velocity_filter.get()
-
-            if acceleration > 0:
-                throttle = acceleration
-            else:
-                brake = self.vehicle_mass * abs(acceleration) * self.wheel_radius
+            # Braking
+            if (  # STAY
+                # want to stop
+                target_linear_velocity == 0. and
+                # currently stopped
+                current_velocity < 0.1
+            ):
+                throttle = 0.
+                brake = 700  # Newton meters to hold Carla in place
+            elif (  # SLOW
+                # throttle is low
+                throttle < 0.1 and
+                # need to slow down
+                target_linear_velocity < current_velocity
+            ):
+                throttle = 0
+                brake = abs(max(velocity_error, self.decel_limit)) * self.vehicle_mass * self.wheel_radius
 
         self.last_time = current_time
 
