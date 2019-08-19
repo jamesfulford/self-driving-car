@@ -164,7 +164,7 @@ class TLDetector(object):
         if self.clicker % SAMPLE_RATE == 0:
             rospy.loginfo("click! {}".format(light.state))
             cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
-            cv2.imwrite("/capstone/data/{}/{}.png".format(light.state, self.clicker // SAMPLE_RATE), cv_image)
+            cv2.imwrite("/capstone/data/image_data/{}/{}.png".format(light.state, self.clicker // SAMPLE_RATE), cv_image)
 
         return light.state  # for now
         # # Get classification
