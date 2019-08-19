@@ -14,7 +14,7 @@ import yaml
 
 STATE_COUNT_THRESHOLD = 3
 
-WAYPOINT_VISIBILITY_HORIZON = 50
+WAYPOINT_VISIBILITY_HORIZON = 100
 """
 A light is considered "visible" when its stopline is
 under WAYPOINT_VISIBILITY_HORIZON waypoints ahead of
