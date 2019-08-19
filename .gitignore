@@ -6,3 +6,8 @@ devel
 profile.tmp
 
 .mypy_cache
+
+data/0
+data/1
+data/2
+data/4

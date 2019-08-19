@@ -21,6 +21,8 @@ under WAYPOINT_VISIBILITY_HORIZON waypoints ahead of
 the car's current position
 """
 
+SAMPLE_RATE = 10
+
 class TLDetector(object):
     def __init__(self):
         rospy.init_node('tl_detector')
@@ -64,6 +66,9 @@ class TLDetector(object):
         self.waypoints_tree = None
         self.lights_tree = None
         self.stop_line_waypoint_indices = []
+
+        # For taking pictures
+        self.clicker = 1451
 
         rospy.spin()
 
@@ -149,13 +154,19 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
+
+
+        if not self.has_image:
+            self.prev_light_loc = None
+            return False
+
+        self.clicker += 1
+        if self.clicker % SAMPLE_RATE == 0:
+            rospy.loginfo("click! {}".format(light.state))
+            cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+            cv2.imwrite("/capstone/data/{}/{}.png".format(light.state, self.clicker // SAMPLE_RATE), cv_image)
+
         return light.state  # for now
-        # if(not self.has_image):
-        #     self.prev_light_loc = None
-        #     return False
-
-        # cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
-
         # # Get classification
         # return self.light_classifier.get_classification(cv_image)
 
