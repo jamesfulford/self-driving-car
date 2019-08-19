@@ -22,29 +22,15 @@ bash run.sh
 Run the Simulator.
 
 ### Training Environment
-Setup environment files
+Build a docker image (based on Term 1 Docker environment).
 ```bash
-git clone https://github.com/udacity/CarND-Term1-Starter-Kit starter-kit && cd starter-kit
-mv Dockerfile.cpu Dockerfile
-```
-
-Build a docker image.
-```bash
+cd data
 docker build . -t model
 ```
 
-Return to capstone repository
+Run model.py in a new docker container
 ```bash
-cd ../capstone
-```
-
-Instantiate a docker container from the image.
-```bash
-docker run -v $PWD:/capstone --rm -it model
-```
-
-```bash
-cd /capstone/data && python model.py
+docker run -v $PWD:/data --rm -it model
 ```
 
 ### Real world testing
