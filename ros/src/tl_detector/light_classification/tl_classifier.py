@@ -1,5 +1,6 @@
 # from styx_msgs.msg import TrafficLight
 from keras.models import load_model
+import tensorflow as tf
 import h5py
 import numpy as np
 
@@ -14,6 +15,7 @@ def onehot_to_number(onehot):
 class TLClassifier(object):
     def __init__(self):
         self.model = load_model("/capstone/data/model.h5")
+        self.graph = tf.get_default_graph()
 
     def get_classification(self, image):
         """
@@ -25,9 +27,16 @@ class TLClassifier(object):
         Returns:
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
         """
-        guess = self.model.predict(np.array([image]), batch_size=1)
-        print guess, guess[0]
-        return onehot_to_number(guess[0])
+        inp = np.array([image])
+        # print inp.shape
+
+        status = 0
+        with self.graph.as_default():
+            guess = self.model.predict(inp, batch_size=1)
+            # print guess[0]
+            status = onehot_to_number(guess[0])
+
+        return status
 
 if __name__ == '__main__':
     from glob import glob
