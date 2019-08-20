@@ -21,7 +21,7 @@ under WAYPOINT_VISIBILITY_HORIZON waypoints ahead of
 the car's current position
 """
 
-# SAMPLE_RATE = 4
+SAMPLE_RATE = 4
 
 class TLDetector(object):
     def __init__(self):
@@ -71,8 +71,8 @@ class TLDetector(object):
         self.last_wp = -1
         self.state_count = 0
 
-        # # For taking pictures
-        # self.clicker = 0
+        # For taking pictures
+        self.clicker = 290 * SAMPLE_RATE
 
         rospy.loginfo('Initialized')
 
@@ -174,15 +174,14 @@ class TLDetector(object):
         # Get classification
         guess = self.light_classifier.get_classification(cv_image)
 
-        # # Collect data where we guess wrong
-        # if guess != light.state:
-        #     rospy.loginfo("click! guess: {}, actual: {}".format(guess, light.state))
-        #     self.clicker += 1
-        #     if self.clicker % SAMPLE_RATE == 0:
-        #         cv2.imwrite(
-        #             "/capstone/data/image_data/{}/{}.png".format(light.state, self.clicker // SAMPLE_RATE),
-        #             cv_image
-        #         )
+        # Collect data where we guess wrong
+        if guess != light.state:
+
+            self.clicker += 1
+            if self.clicker % SAMPLE_RATE == 0:
+                path = "/capstone/data/image_data/{}/{}.png".format(light.state, self.clicker // SAMPLE_RATE)
+                rospy.loginfo("click! {}".format(path))
+                cv2.imwrite(path, cv_image)
 
         return guess
 
