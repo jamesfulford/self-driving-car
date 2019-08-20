@@ -27,10 +27,23 @@ class TLDetector(object):
     def __init__(self):
         rospy.init_node('tl_detector')
 
+        self.pose_initialized = False
         self.pose = None
+
+        self.waypoints_initialized = False
         self.waypoints = None
-        self.camera_image = None
+        self.waypoints_tree = None
+        self.stop_line_waypoint_indices = []
+
+        self.lights_initialized = False
         self.lights = []
+        self.lights_tree = None
+
+        self.camera_image_initialized = False
+        self.camera_image = None
+
+        config_string = rospy.get_param("/traffic_light_config")
+        self.config = yaml.load(config_string)
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -45,12 +58,11 @@ class TLDetector(object):
         sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb)
         sub6 = rospy.Subscriber('/image_color', Image, self.image_cb)
 
-        config_string = rospy.get_param("/traffic_light_config")
-        self.config = yaml.load(config_string)
 
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
         self.bridge = CvBridge()
+        rospy.loginfo('Initializing')
         self.light_classifier = TLClassifier()
         self.listener = tf.TransformListener()
 
@@ -59,16 +71,10 @@ class TLDetector(object):
         self.last_wp = -1
         self.state_count = 0
 
-        self.waypoints_initialized = False
-        self.lights_initialized = False
-        self.pose_initialized = False
+        # # For taking pictures
+        # self.clicker = 1451
 
-        self.waypoints_tree = None
-        self.lights_tree = None
-        self.stop_line_waypoint_indices = []
-
-        # For taking pictures
-        self.clicker = 1451
+        rospy.loginfo('Initialized')
 
         rospy.spin()
 
@@ -110,8 +116,8 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
-        self.has_image = True
         self.camera_image = msg
+        self.camera_image_initialized = True
         light_wp, state = self.process_traffic_lights()
 
         '''
@@ -155,20 +161,22 @@ class TLDetector(object):
 
         """
 
-
-        if not self.has_image:
-            self.prev_light_loc = None
+        if not self.camera_image_initialized:
             return False
 
-        self.clicker += 1
-        if self.clicker % SAMPLE_RATE == 0:
-            rospy.loginfo("click! {}".format(light.state))
-            cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
-            cv2.imwrite("/capstone/data/image_data/{}/{}.png".format(light.state, self.clicker // SAMPLE_RATE), cv_image)
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
-        return light.state  # for now
-        # # Get classification
-        # return self.light_classifier.get_classification(cv_image)
+        # self.clicker += 1
+        # if self.clicker % SAMPLE_RATE == 0:
+        #     rospy.loginfo("click! {}".format(light.state))
+        #     cv2.imwrite("/capstone/data/image_data/{}/{}.png".format(light.state, self.clicker // SAMPLE_RATE), cv_image)
+
+        # return light.state  # for now
+
+        # Get classification
+        guess = self.light_classifier.get_classification(cv_image)
+        rospy.loginfo("guess: {}, actual: {}".format(guess, light.state))
+        return light.state
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its

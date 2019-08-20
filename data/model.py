@@ -4,35 +4,41 @@ from math import ceil
 import numpy as np
 from scipy import ndimage
 from PIL import Image
-import sklearn
-from sklearn.model_selection import train_test_split
 import cv2
 
 from keras.models import Sequential
 from keras.layers import (
+    Activation,
     Convolution2D,
-    Cropping2D,
     Dense,
     Dropout,
     Flatten,
     Lambda,
 )
 
+
+RED =       [ 1, 0, 0, 0 ]
+YELLOW =    [ 0, 1, 0, 0 ]
+GREEN =     [ 0, 0, 1, 0 ]
+UNKNOWN =   [ 0, 0, 0, 1 ]
+NUMBER_TO_1HOT = [ RED, YELLOW, GREEN, None, UNKNOWN ]  # See TrafficLight enum
+
+
 #
 # Configurations
 #
 
 # Assumes running in container
-images_glob = "/data/image_data/*/*.png"
-slash_index_of_classification = -2
+images_glob = "/capstone/data/image_data/*/*.png"
+slash_index_of_class = -2  # should use  ^ this
 
 input_shape = (600, 800, 3)
 
-batch_size = 8
+batch_size = 32
 
 validation_set_size = .2
 
-epochs = 5
+epochs = 10
 
 #
 # Get data from filesystem
@@ -41,20 +47,16 @@ samples = glob.glob(images_glob)
 
 print("Samples: {}".format(len(samples)))
 
-train_samples, validation_samples = train_test_split(
-    samples,
-    test_size=validation_set_size
-)
-
-
 #
-# Define generators to access data
+# Extract and mangle data
 #
 def get_data_from_sample(sample):
     image = ndimage.imread(sample)
     p = Image.fromarray(image)
 
-    value = int(sample.split('/')[slash_index_of_classification])
+    value = NUMBER_TO_1HOT[
+        int(sample.split('/')[slash_index_of_class])
+    ]
 
     images = [
         image,
@@ -69,25 +71,19 @@ def get_data_from_sample(sample):
         [value for _ in images]
     )
 
+loaded_sample_packs = map(get_data_from_sample, samples)
 
-def data_generator(samples, batch_size=128):
-    n = len(samples)
-    while True:
-        samples = sklearn.utils.shuffle(samples)
-        for i in range(0, n, batch_size):
-            batch_samples = samples[i:i + batch_size]
+features = []
+for images in map(lambda sp: sp[0], loaded_sample_packs):
+    features.extend(images)
+features = np.array(features)
 
-            batch_images, batch_values = [], []
+labels = []
+for values in map(lambda sp: sp[1], loaded_sample_packs):
+    labels.extend(values)
+labels = np.array(labels)
 
-            for sample in batch_samples:
-                images, values = get_data_from_sample(sample)
-                batch_images.extend(images)
-                batch_values.extend(values)
-
-            yield sklearn.utils.shuffle(
-                np.array(batch_images),
-                np.array(batch_values),
-            )
+print("features: {}, labels: {}".format(features.shape, labels.shape))
 
 #
 # Define model
@@ -101,10 +97,6 @@ model.add(Convolution2D(36, (5, 5), strides=(2, 2), activation="relu"))
 model.add(Dropout(0.1))
 model.add(Convolution2D(48, (5, 5), strides=(2, 2), activation="relu"))
 model.add(Dropout(0.1))
-model.add(Convolution2D(64, (3, 3), activation="relu"))
-model.add(Dropout(0.1))
-model.add(Convolution2D(64, (3, 3), activation="relu"))
-model.add(Dropout(0.1))
 
 model.add(Flatten())
 
@@ -114,23 +106,22 @@ model.add(Dense(50))
 model.add(Dropout(0.5))
 model.add(Dense(10))
 model.add(Dropout(0.5))
-model.add(Dense(1))  # output layer
+model.add(Dense(4))  # output layer
+model.add(Activation("softmax"))
+
 
 #
 # Train model
 #
-model.compile(loss="mse", optimizer="adam")
-model.fit_generator(
-    data_generator(
-        train_samples,
-        batch_size=batch_size,
-    ),
-    steps_per_epoch=ceil(len(train_samples) / batch_size),
-    validation_data=data_generator(
-        validation_samples,
-        batch_size=batch_size,
-    ),
-    validation_steps=ceil(len(validation_samples) / batch_size),
+model.compile(loss="categorical_crossentropy", optimizer="adam")
+model.fit(
+
+    features,
+    labels,
+
+    validation_split=validation_set_size,
+    shuffle=True,
+
     epochs=epochs,
 )
-model.save("model.h5")
+model.save("/capstone/data/model.h5")
