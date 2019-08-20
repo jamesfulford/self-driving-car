@@ -34,7 +34,7 @@ slash_index_of_class = -2  # should use  ^ this
 
 input_shape = (600, 800, 3)
 
-batch_size = 32
+batch_size = 64
 
 validation_set_size = .2
 
@@ -51,7 +51,7 @@ print("Samples: {}".format(len(samples)))
 # Extract and mangle data
 #
 def get_data_from_sample(sample):
-    image = ndimage.imread(sample)
+    image = cv2.cvtColor(ndimage.imread(sample), cv2.COLOR_RGB2BGR)
     p = Image.fromarray(image)
 
     value = NUMBER_TO_1HOT[
@@ -60,10 +60,10 @@ def get_data_from_sample(sample):
 
     images = [
         image,
-        np.fliplr(image),  # flipping left-to-right
-        np.array(p.rotate(15, expand=False)),  # rotating
-        np.array(p.rotate(365 - 15, expand=False)),  # rotating the other way
-        cv2.cvtColor(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY), cv2.COLOR_GRAY2RGB),  # rgb -> grayscale -> "rgb"
+        # np.fliplr(image),  # flipping left-to-right
+        # np.array(p.rotate(15, expand=False)),  # rotating
+        # np.array(p.rotate(365 - 15, expand=False)),  # rotating the other way
+        cv2.cvtColor(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR),  # BGR -> grayscale -> "BGR"
     ]
     return (
         images,
@@ -103,8 +103,6 @@ model.add(Flatten())
 model.add(Dense(100))
 model.add(Dropout(0.5))
 model.add(Dense(50))
-model.add(Dropout(0.5))
-model.add(Dense(10))
 model.add(Dropout(0.5))
 model.add(Dense(4))  # output layer
 model.add(Activation("softmax"))
