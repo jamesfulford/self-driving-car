@@ -18,7 +18,7 @@ from keras.layers import (
 
 
 RED =       [ 1, 0, 0 ]
-YELLOW =    [ 0, 1, 0 ]
+YELLOW =    [ 0, 0, 1 ]  # our code treats yellow as green, so might as well
 GREEN =     [ 0, 0, 1 ]
 NUMBER_TO_1HOT = [ RED, YELLOW, GREEN ]  # See TrafficLight enum
 
