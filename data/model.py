@@ -38,12 +38,13 @@ batch_size = 64
 
 validation_set_size = .2
 
-epochs = 10
+epochs = 50
 
 #
 # Get data from filesystem
 #
 samples = glob.glob(images_glob)
+samples = filter(lambda p: "/1/" not in p, samples)
 
 print("Samples: {}".format(len(samples)))
 
@@ -60,9 +61,9 @@ def get_data_from_sample(sample):
 
     images = [
         image,
-        # np.fliplr(image),  # flipping left-to-right
-        # np.array(p.rotate(15, expand=False)),  # rotating
-        # np.array(p.rotate(365 - 15, expand=False)),  # rotating the other way
+        np.fliplr(image),  # flipping left-to-right
+        np.array(p.rotate(5, expand=False)),  # rotating
+        np.array(p.rotate(365 - 5, expand=False)),  # rotating the other way
         cv2.cvtColor(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR),  # BGR -> grayscale -> "BGR"
     ]
     return (
