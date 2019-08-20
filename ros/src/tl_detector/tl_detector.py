@@ -12,7 +12,7 @@ import tf
 import cv2
 import yaml
 
-STATE_COUNT_THRESHOLD = 3
+STATE_COUNT_THRESHOLD = 5
 
 WAYPOINT_VISIBILITY_HORIZON = 100
 """
@@ -21,7 +21,7 @@ under WAYPOINT_VISIBILITY_HORIZON waypoints ahead of
 the car's current position
 """
 
-SAMPLE_RATE = 10
+# SAMPLE_RATE = 4
 
 class TLDetector(object):
     def __init__(self):
@@ -72,7 +72,7 @@ class TLDetector(object):
         self.state_count = 0
 
         # # For taking pictures
-        # self.clicker = 1451
+        # self.clicker = 0
 
         rospy.loginfo('Initialized')
 
@@ -171,12 +171,20 @@ class TLDetector(object):
         #     rospy.loginfo("click! {}".format(light.state))
         #     cv2.imwrite("/capstone/data/image_data/{}/{}.png".format(light.state, self.clicker // SAMPLE_RATE), cv_image)
 
-        # return light.state  # for now
-
         # Get classification
         guess = self.light_classifier.get_classification(cv_image)
-        rospy.loginfo("guess: {}, actual: {}".format(guess, light.state))
-        return light.state
+
+        # # Collect data where we guess wrong
+        # if guess != light.state:
+        #     rospy.loginfo("click! guess: {}, actual: {}".format(guess, light.state))
+        #     self.clicker += 1
+        #     if self.clicker % SAMPLE_RATE == 0:
+        #         cv2.imwrite(
+        #             "/capstone/data/image_data/{}/{}.png".format(light.state, self.clicker // SAMPLE_RATE),
+        #             cv_image
+        #         )
+
+        return guess
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
