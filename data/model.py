@@ -17,11 +17,10 @@ from keras.layers import (
 )
 
 
-RED =       [ 1, 0, 0, 0 ]
-YELLOW =    [ 0, 1, 0, 0 ]
-GREEN =     [ 0, 0, 1, 0 ]
-UNKNOWN =   [ 0, 0, 0, 1 ]
-NUMBER_TO_1HOT = [ RED, YELLOW, GREEN, None, UNKNOWN ]  # See TrafficLight enum
+RED =       [ 1, 0, 0 ]
+YELLOW =    [ 0, 1, 0 ]
+GREEN =     [ 0, 0, 1 ]
+NUMBER_TO_1HOT = [ RED, YELLOW, GREEN ]  # See TrafficLight enum
 
 
 #
@@ -38,7 +37,7 @@ batch_size = 64
 
 validation_set_size = .2
 
-epochs = 50
+epochs = 10
 
 #
 # Get data from filesystem
@@ -105,7 +104,7 @@ model.add(Dense(100))
 model.add(Dropout(0.5))
 model.add(Dense(50))
 model.add(Dropout(0.5))
-model.add(Dense(4))  # output layer
+model.add(Dense(3))  # output layer
 model.add(Activation("softmax"))
 
 

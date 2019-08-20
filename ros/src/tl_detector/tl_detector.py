@@ -12,9 +12,9 @@ import tf
 import cv2
 import yaml
 
-STATE_COUNT_THRESHOLD = 5
+STATE_COUNT_THRESHOLD = 10
 
-WAYPOINT_VISIBILITY_HORIZON = 100
+WAYPOINT_VISIBILITY_HORIZON = 75
 """
 A light is considered "visible" when its stopline is
 under WAYPOINT_VISIBILITY_HORIZON waypoints ahead of
@@ -181,7 +181,7 @@ class TLDetector(object):
             if self.clicker % SAMPLE_RATE == 0:
                 path = "/capstone/data/image_data/{}/{}.png".format(light.state, self.clicker // SAMPLE_RATE)
                 rospy.loginfo("click! {}".format(path))
-                cv2.imwrite(path, cv_image)
+                # cv2.imwrite(path, cv_image)
 
         return guess
 

@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 
 
-ONEHOT_INDEX_TO_NUMBER = [0, 1, 2, 4]
+ONEHOT_INDEX_TO_NUMBER = [0, 1, 2]
 
 
 def onehot_to_number(onehot):
